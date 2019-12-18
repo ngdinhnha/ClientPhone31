@@ -260,7 +260,6 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 					//addText("受信完了----");
 					//}
 
-
 					recievevoice++;
 
 
@@ -354,6 +353,7 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 							//Log.v("check", String.valueOf(isTalked));
 						}
 
+						//Test Git
 						//Log.v("isTalking", String.valueOf("yes"));
 
 						bytes_read = audioRecorder.read(buf, 0, BUF_SIZE);//送信1音声としてBUFSIZE分書き込むBUF_SIZE+TIME_BUF
