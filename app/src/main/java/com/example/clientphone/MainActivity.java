@@ -71,8 +71,8 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 	private final Handler handler = new Handler();// ハンドラ
 	private boolean mic; // Enable mic?
 	private boolean speakers = false; // Enable speakers?
-	//boolean recordOrOutput = true;
-	//boolean OutputOrNot = false;
+	boolean recordOrOutput = true;
+	boolean OutputOrNot = false;
 
 	private AudioRecord audioRecorder = new AudioRecord(
 			MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
@@ -88,8 +88,8 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 	public long pattern[] = {1000, 200, 700, 200, 400, 200};
 	public static ToneGenerator toneGenerator;
 	private AudioManager audioManager;
-	//private int flag = 0;
-	//private int count2 = 0;
+	private int flag = 0;
+	private int count2 = 0;
 	MediaPlayer mp = null;
 	int cnt = 0;
 	// 狩猟範囲：実験時は浜キャン内をエリアとする
@@ -97,11 +97,11 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 	private double rangeLong_left = 137.715123;// 範囲
 	private double rangeLati_up = 34.727743;// 範囲
 	private double rangeLati_bottom = 34.722923;// 範囲
-	//private int millisec;
+	private int millisec;
 	private int others = 0;// 範囲内の端末数
 	private int portnum = 50016;
 	private int sendvoice = 0;
-	//String deviceName = Build.DEVICE;
+	String deviceName = Build.DEVICE;
 
 	// アクティビティ起動時に呼ばれる
 	@Override
@@ -322,9 +322,10 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				boolean isTalked = false;
-				int i = 0;
-
+				boolean isTalking = false;
+				boolean isSilent_Check;
+				int isSilent_Count = 0;
+				int i;
 
 				// Create an instance of the AudioRecord class
 				Log.i(LOG_TAG, "Send thread started. Thread id: "
@@ -341,86 +342,62 @@ public class MainActivity extends Activity implements OnCheckedChangeListener,
                     while (mic == true) {
 						// Capture audio from the mic and transmit it
 
-						// 12月03日に追加
-						while(!isTalked){
+						Log.v("isTalking", String.valueOf(isTalking));
+
+						//しゃべるチェック開始
+						while(!isTalking){
 							bytes_read = audioRecorder.read(buf, 0, BUF_SIZE);//送信1音声としてBUFSIZE分書き込むBUF_SIZE+TIME_BUF
 							for(i=1;i<BUF_SIZE;i=i+2){
 								if(Math.abs(buf[i])>20){
-									isTalked = true;
+									isTalking = true;
+									isSilent_Count = 0;
 									break;
 								}
 							}
-							//Log.v("check", String.valueOf(isTalked));
+
 						}
+						//しゃべるチェック終了
 
-						//Test Git
-						//Log.v("isTalking", String.valueOf("yes"));
-
+						//黙るチェック開始
 						bytes_read = audioRecorder.read(buf, 0, BUF_SIZE);//送信1音声としてBUFSIZE分書き込むBUF_SIZE+TIME_BUF
-						try {
-							/*
-							long currentTimeMillis = System.currentTimeMillis();
-							Calendar calendar = Calendar.getInstance();
-							Log.v("Test", String.valueOf(currentTimeMillis));
-							calendar.setTimeInMillis(currentTimeMillis);
-							Log.v("Test",
-									calendar.get(Calendar.HOUR_OF_DAY) + ":" +
-											calendar.get(Calendar.MINUTE) + ":" +
-											calendar.get(Calendar.SECOND) + ":" +
-											calendar.get(Calendar.MILLISECOND));
-							buf[BUF_SIZE] = (byte)calendar.get(Calendar.MINUTE);
-							buf[BUF_SIZE + 1] = (byte)calendar.get(Calendar.SECOND);
-							millisec = calendar.get(Calendar.MILLISECOND);
-							//System.out.println(millisec);
-							if (String.valueOf(millisec).length() == 3) {
-								buf[BUF_SIZE+2] = (byte)(millisec / 100);
-								System.out.println(buf[BUF_SIZE+2]);
-								buf[BUF_SIZE+3] = (byte)((millisec / 10) % 10);
-								System.out.println(buf[BUF_SIZE+3]);
-								buf[BUF_SIZE+4] = (byte)(millisec % 10);
-								System.out.println(buf[BUF_SIZE+4]);
-							} else if (String.valueOf(millisec).length() == 2) {
-								buf[BUF_SIZE+2] = 0;
-								buf[BUF_SIZE+3] = (byte)(millisec / 10);
-								buf[BUF_SIZE+4] = (byte)(millisec % 10);
-							} else if (String.valueOf(millisec).length() == 1) {
-								buf[BUF_SIZE+2] = 0;
-								buf[BUF_SIZE+3] = 0;
-								buf[BUF_SIZE+4] = (byte)millisec;
+						if(isSilent_Count < 300) {
+							for (i = 1; i < BUF_SIZE; i = i + 2) {
+								if (Math.abs(buf[i]) > 20) {
+									isSilent_Count = 0;
+									break;
+								}
 							}
-							*/
+							isSilent_Count++;
+						} else {
+							isTalking = false;
+						}
+						//黙るチェック終了
+
+						try {
 							out.write(buf, 0, bytes_read);
 							out.flush();
 						} catch (IOException e) {
 							e.printStackTrace();
 							break;
 						}
-							bytes_sent += bytes_read;
-							Log.i(LOG_TAG, "Total bytes sent: " + bytes_sent);
-							////////////////////////////////////////////////////////////////////////////
+						bytes_sent += bytes_read;
+						Log.i(LOG_TAG, "Total bytes sent: " + bytes_sent);
+						// 送信時刻表示
+						//if (sendvoice < 8) {
+						long currentTimeMillis = System.currentTimeMillis();
+						Log.v("Test", String.valueOf(currentTimeMillis));
+						Calendar calendar = Calendar.getInstance();
+						calendar.setTimeInMillis(currentTimeMillis);
+						//addText("送信中----");
+						addText(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+								+ calendar.get(Calendar.MINUTE) + ":"
+								+ calendar.get(Calendar.SECOND) + "."
+								+ calendar.get(Calendar.MILLISECOND));
+						//addText("送信完了----");
 
-
-							////////////////////////////////////////////////////////////////////////////
-							// 送信時刻表示
-
-							//if (sendvoice < 8) {
-							long currentTimeMillis = System.currentTimeMillis();
-							Log.v("Test", String.valueOf(currentTimeMillis));
-
-							Calendar calendar = Calendar.getInstance();
-							calendar.setTimeInMillis(currentTimeMillis);
-							//addText("送信中----");
-							addText(calendar.get(Calendar.HOUR_OF_DAY) + ":"
-									+ calendar.get(Calendar.MINUTE) + ":"
-									+ calendar.get(Calendar.SECOND) + "."
-									+ calendar.get(Calendar.MILLISECOND));
-							//addText("送信完了----");
-							//}
-
-							sendvoice++;
-							// Thread.sleep(SAMPLE_INTERVAL, 0);
-						}
-					//}
+						sendvoice++;
+						// Thread.sleep(SAMPLE_INTERVAL, 0);
+					}
 
 
 					while (mic == false) {

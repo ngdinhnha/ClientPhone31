@@ -1,4 +1,4 @@
-#Tue Dec 17 13:51:00 JST 2019
+#Thu Jan 09 15:48:54 JST 2020
 base.0=C\:\\Users\\ngdin\\OneDrive\\MMC\\ClientPhone31\\app\\build\\intermediates\\dex\\debug\\mergeDexDebug\\out\\classes.dex
 path.0=classes.dex
 renamed.0=classes.dex
